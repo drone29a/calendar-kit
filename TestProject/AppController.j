@@ -7,6 +7,7 @@
  */
 
 @import <Foundation/CPObject.j>
+@import <Foundation/CPLog.j>
 
 @import "CalendarKit/CKWeekPlanner.j"
 
@@ -28,14 +29,22 @@
     //    [meter setCenter:[contentView center]];
     //[contentView addSubview:meter];
 
-    var weekPlanner = [[CKWeekPlanner alloc] initWithFrame:CGRectMake(0, 0, 960, 600) schedule:nil];
-    [weekPlanner setCenter:[contentView center]];
-    [contentView addSubview:weekPlanner];
+    var floatingWindow = [[CPWindow alloc] initWithContentRect:CGRectMake(50.0, 50.0, 400.0, 300.0) 
+                                                     styleMask:CPTitledWindowMask | CPClosableWindowMask | CPResizableWindowMask],
+        floatingContentView = [floatingWindow contentView];
+
+    var weekPlanner = [[CKWeekPlanner alloc] initWithFrame:[floatingContentView bounds] schedule:nil];
+    [weekPlanner setAutoresizingMask:CPViewWidthSizable | CPViewHeightSizable];
+
+    [floatingContentView addSubview:weekPlanner];
 
     [theWindow orderFront:self];
+    [floatingWindow orderFront:self];
 
     // Uncomment the following line to turn on the standard menu bar.
-    //[CPMenu setMenuBarVisible:YES];
+    //    [CPMenu setMenuBarVisible:YES];
+
+    CPLogRegister(CPLogPopup);
 }
 
 @end
