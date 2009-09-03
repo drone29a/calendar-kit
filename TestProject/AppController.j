@@ -20,6 +20,8 @@
 
 - (void)applicationDidFinishLaunching:(CPNotification)aNotification
 {
+    CPLogRegister(CPLogPopup);
+    
     var theWindow = [[CPWindow alloc] initWithContentRect:CGRectMakeZero() styleMask:CPBorderlessBridgeWindowMask],
         contentView = [theWindow contentView];
 
@@ -42,6 +44,17 @@
     var weekPlannerController = [[WeekPlannerController alloc] init];
     [weekPlanner setDelegate:weekPlannerController];
 
+    var startDate = [[CPDate alloc] initWithString:"Aug 30, 2009"],
+        endDate = [[CPDate alloc] initWithTimeInterval:(7 * 24 * 60 * 60 * 1000) - 1 sinceDate:startDate],
+        schedule = [[CKSchedule alloc] initWithStartDate:startDate endDate:endDate];
+
+    [weekPlanner setSchedule:schedule];
+    [schedule addObserver:weekPlannerController
+               forKeyPath:"startDate"
+                  options:(CPKeyValueObservingOptionNew |
+                           CPKeyValueObservingOptionOld)
+                  context:NULL];
+
     [floatingContentView addSubview:weekPlanner];
 
     [theWindow orderFront:self];
@@ -49,8 +62,6 @@
 
     // Uncomment the following line to turn on the standard menu bar.
     //    [CPMenu setMenuBarVisible:YES];
-
-    CPLogRegister(CPLogPopup);
 }
 
 @end
