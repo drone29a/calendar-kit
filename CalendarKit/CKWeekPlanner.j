@@ -65,6 +65,13 @@
     [self drawDays];
     [self drawHourGrid];   
     [self drawHalfHourGrid];
+
+    // Draw events
+    for (var i = 0; i < [[_schedule events] count]; ++i) 
+    {
+        var event = [[_schedule events] objectAtIndex: i];
+        CPLog.debug([event startDate]);
+    }
 }
 
 - (void)drawHourGrid
@@ -188,6 +195,17 @@
 - (void)mouseDown:(CPEvent)anEvent
 {       
 
+}
+
+- (void)observeValueForKeyPath:(CPString)keyPath
+                      ofObject:(id)object
+                        change:(CPDictionary)change
+                       context:(id)context
+{
+    if (keyPath == "events")
+    {
+        [self setNeedsDisplay:YES];
+    }
 }
 
 - (void)trackSelection:(CPEvent)anEvent

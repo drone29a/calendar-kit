@@ -2,28 +2,19 @@
 
 @implementation CKEvent : CPObject
 {
-    CPDate _start;
-    CPTimeInterval _duration;
-    CPString _title;
-    CPString _description;
+    CPDate _startDate @accessors(property=startDate);
+    CPDate _endDate @accessors(property=endDate);
+    CPString _title @accessors(property=title);
+    CPString _description @accessors(property=description);
 }
 
-- (CPDate)startTime
+- (id)initWithStartDate:(CPDate)aStart endDate:(CPDate)anEnd
 {
-    return _start;
-}
-
-- (CPDate)endTime
-{
-    return [[CPDate alloc] initWithTimeInterval:_duration sinceDate:_start];
-}
-
-- (CPString)title
-{
-    return _title;
-}
-
-- (CPString)description
-{
-    return _description;
+    if (self = [super init])
+    {
+        _startDate = aStart;
+        _endDate = anEnd;
+    }
+    
+    return self;
 }
