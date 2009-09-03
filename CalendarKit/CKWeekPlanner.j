@@ -9,15 +9,16 @@
 @implementation CKWeekPlanner : CPView
 {
     CKSchedule _schedule;
+    id _delegate @accessors(property=delegate);
     
     CPData _eventViewData;
     CKEventView _eventViewForDragging;
-    CKEventView _eventViewPrototype;
+    CKEventView _eventViewPrototype; // @accessors(property=eventViewPrototype;
     // What hours to display
-    CPRange _hourRange;
+    CPRange _hourRange; // @accessors(property=hourRange);
 
-    int _numDays;
-    int _numHours;
+    int _numDays; // @accessors(property=numDays);
+    int _numHours; // @accessors(property=numHours);
 }
 
 - (id)initWithFrame:(CGRect)aFrame schedule:(CKSchedule)aSchedule
@@ -167,6 +168,9 @@
 - (float)timeAtPoint:(CGPoint)aPoint
 {
     var time = (aPoint.y / [self hourHeight]) + _hourRange.location;
+    
+    if (time < 0 || time > 24)
+        return CPNotFound;
 
     return time;
 }
@@ -176,23 +180,33 @@
     return CPRectGetHeight([self bounds]) / _numHours;
 }
 
-- (void)mouseDown:(CPEvent)anEvent
+- (void)mouseUp:(CPEvent)anEvent
 {
     var type = [anEvent type],
-        point = [self convertPoint:[anEvent locationInWindow] fromView:nil];
+        location = [self convertPoint:[anEvent locationInWindow] fromView:nil],
+        clickedDay = [self dayAtPoint:location],
+        clickedTime = [self timeAtPoint:location];
 
-    if (type == CPLeftMouseDown)
+    if (type == CPLeftMouseUp && [anEvent clickCount] == 2)
     {
-        var clickedDay = [self dayAtPoint:point];
-        var clickedTime = [self timeAtPoint:point];
-        
-        CPLog.debug("clicked day: " + clickedDay);
-        CPLog.debug("clicked time: " + clickedTime);
-
-        // if clicked on existing event
-
-        
+        if ([_delegate respondsToSelector:@selector(weekPlanner:didDoubleClickOnDay:atTime:)]) 
+        {
+            [_delegate weekPlanner:self didDoubleClickOnDay:clickedDay atTime:clickedTime];
+        }
     }
+    else if (type == CPLeftMouseUp)
+    {
+        if ([_delegate respondsToSelector:@selector(weekPlanner:didClickOnDay:atTime:)]) 
+        {
+            [_delegate weekPlanner:self didClickOnDay:clickedDay atTime:clickedTime];
+        }
+    }
+        
+}
+
+- (void)mouseDown:(CPEvent)anEvent
+{       
+
 }
 
 - (void)trackSelection:(CPEvent)anEvent
