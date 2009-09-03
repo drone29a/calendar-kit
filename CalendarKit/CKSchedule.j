@@ -1,20 +1,22 @@
-@implementation CKSchedule
+@implementation CKSchedule : CPObject
 {
-    CPDate _startDate;
+    CPDate _startDate @accessors(property=startDate);
+    CPDate _endDate @accessors(property=endDate);
     CPTimeInterval _timeDuration;
-    CPArray _events;  //TODO: this should be CPDictionary, just need to pick a key
+    CPArray _events @accessors(property=events);
+}
+
+- (id)initWithStartDate:(CPDate)aStartDate endDate:(CPDate)anEndDate
+{
+    if (self = [super init])
+    {
+        _startDate = aStartDate;
+        _endDate = anEndDate;
+    }
+
+    return self;
 }
     
-- (CPDate)startDate
-{
-    return _startDate;
-}
-
-- (CPDate)endDate
-{
-    return [[CPDate alloc] initWithTimeInterval:_timeDuration sinceDate:_start];
-}
-
 - (CPArray)events
 {
     return _events;
@@ -32,5 +34,5 @@
 
 - (int)numDays
 {
-    return nil;
+    return (_endDate - _startDate) / 1000 * 60 * 60 * 24;
 }

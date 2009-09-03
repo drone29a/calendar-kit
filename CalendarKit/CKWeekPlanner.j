@@ -8,7 +8,7 @@
 
 @implementation CKWeekPlanner : CPView
 {
-    CKSchedule _schedule;
+    CKSchedule _schedule @accessors(property=schedule);
     id _delegate @accessors(property=delegate);
     
     CPData _eventViewData;
@@ -37,25 +37,6 @@
     _hourRange = CPMakeRange(0, 24);
     _numDays = 7;
     _numHours = 24;
-}
-
-/*
-  Set the schedule that will be displayed.
-  @param aSchedule the schedule to display
- */
-- (void)setSchedule:(CKSchedule)aSchedule
-{
-    _schedule = aSchedule;
-    [self reloadSchedule];
-}
-
-/*
- Return the displayed schedule.
- @return the displayed schedule
-*/
-- (CKSchedule)schedule
-{
-    return _schedule;
 }
 
 - (void)setEventViewPrototype:(CKEventView)anEventView
