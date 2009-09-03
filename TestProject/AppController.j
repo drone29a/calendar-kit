@@ -49,10 +49,16 @@
         schedule = [[CKSchedule alloc] initWithStartDate:startDate endDate:endDate];
 
     [weekPlanner setSchedule:schedule];
+    [weekPlannerController setSchedule:schedule];
     [schedule addObserver:weekPlannerController
                forKeyPath:"startDate"
                   options:(CPKeyValueObservingOptionNew |
                            CPKeyValueObservingOptionOld)
+                  context:NULL];
+
+    [schedule addObserver:weekPlanner
+               forKeyPath:"events"
+                  options:CPKeyValueObservingOptionNew
                   context:NULL];
 
     [floatingContentView addSubview:weekPlanner];
