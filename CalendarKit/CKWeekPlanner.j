@@ -11,11 +11,15 @@
     CKSchedule _schedule @accessors(property=schedule);
     id _delegate @accessors(property=delegate);
     
-    CPData _eventViewData;
-    CKEventView _eventViewForDragging;
-    CKEventView _eventViewPrototype; // @accessors(property=eventViewPrototype;
+    CKWeekPlannerItem _eventItemData;
+    CKWeekPlannerItem _eventItemForDragging;
+    CKWeekPlannerItem _eventItemPrototype @accessors(property=eventItemPrototype);
     // What hours to display
-    CPRange _hourRange; // @accessors(property=hourRange);
+    CPRange _hourRange @accessors(property=hourRange);
+    
+    CPArray _items;
+    //TODO: how to handle multiple selected
+    CPArray _selectedItems @accessors(property=selectedItems);
 
     int _numDays; // @accessors(property=numDays);
     int _numHours; // @accessors(property=numHours);
@@ -37,20 +41,17 @@
     _hourRange = CPMakeRange(0, 24);
     _numDays = 7;
     _numHours = 24;
+
+    _eventItems = [];
 }
 
-- (void)setEventViewPrototype:(CKEventView)anEventView
+- (void)setEventItemPrototype:(CKWeekPlannerItem)anEventItem
 {
-    _eventViewData = [CPKeyedArchiver archivedDataWithRootObject:anEventView];
-    _eventViewForDragging = anEventView;
-    _eventViewPrototype = anEventView;
+    _eventItemData = [CPKeyedArchiver archivedDataWithRootObject:anEventItem];
+    _eventItemForDragging = anEventItem;
+    _eventItemPrototype = anEventItem;
 
-    [self reloadSchedule];
-}
-
-- (CKEventView)eventViewPrototype
-{
-    return _eventViewPrototype;
+    [self setNeedsDisplay:YES];
 }
 
 - (void)drawRect:(CPRect)aRect
@@ -249,3 +250,146 @@
     [CPApp setTarget:self selector:@selector(trackSelection:) forNextEventMatchingMask:CPLeftMouseDraggedMask | CPLeftMouseUpMask untilDate:nil inMode:nil dequeue:YES];
 }
 
+- (CKEventItem)newEventItemForEventObject:(id)anObject
+{
+    var item = [CPKeyedUnarchiver unarchiveObjectWithData:_eventItemData];
+    
+    CPLog.debug(anObject._startDate);
+
+    [item setRepresentedObject:anObject];
+    [[item view] setFrameSize:CPSizeMake(100, 100)];
+
+    return item;
+}
+
+@end
+
+// TODO: We could use just one notification if we determine it's fair to add 
+// an "item" attribute to the item's _view, so that way we get the item reference
+// when the ItemViewSelected notification goes out instead of using it as a way
+// to lookup the item reference.
+
+// The CKWeekPlannerItem view should post this notification when appropriate
+CKWeekPlannerItemSelectedNotification = "CKWeekPlannerItemSelectedNotification";
+CKWeekPlannerItemViewSelectedNotification = "CKWeekPlannerItemViewSelectedNotification";
+
+@implementation CKWeekPlannerItem : CPObject
+{
+    id      _representedObject;
+    CPView  _view;
+    BOOL    _isSelected;
+}
+
+// Setting the Represented Object
+/*!
+    Sets the object to be represented by this item.
+    @param anObject the object to be represented
+*/
+- (void)setRepresentedObject:(id)anObject
+{
+    if (_representedObject == anObject)
+        return;
+    
+    _representedObject = anObject;
+    
+    // FIXME: This should be set up by bindings
+    [_view setRepresentedObject:anObject];
+
+    [[CPNotificationCenter defaultCenter] addObserver:self 
+                                             selector:@selector(viewSelected:)
+                                                 name:CKWeekPlannerItemViewSelectedNotification
+                                               object:_view];
+}
+
+- (void)viewSelected:(CPNotification)notification
+{
+    [[CPNotificationCenter defaultCenter] postNotificationName:CKWeekPlannerItemSelectedNotification
+                                                        object:self];
+}
+
+/*!
+    Returns the object represented by this view item
+*/
+- (id)representedObject
+{
+    return _representedObject;
+}
+
+// Modifying the View
+/*!
+    Sets the view that is used represent this object.
+    @param aView the view used to represent this object
+*/
+- (void)setView:(CPView)aView
+{
+    _view = aView;
+}
+
+/*!
+    Returns the view that represents this object.
+*/
+- (CPView)view
+{
+    return _view;
+}
+
+// Modifying the Selection
+/*!
+    Sets whether this view item should be selected.
+    @param shouldBeSelected \c YES makes the item selected. \c NO deselects it.
+*/
+- (void)setSelected:(BOOL)shouldBeSelected
+{
+    if (_isSelected == shouldBeSelected)
+        return;
+    
+    _isSelected = shouldBeSelected;
+    
+    // FIXME: This should be set up by bindings
+    [_view setSelected:_isSelected];
+}
+
+/*!
+    Returns \c YES if the item is currently selected. \c NO if the item is not selected.
+*/
+- (BOOL)isSelected
+{
+    return _isSelected;
+}
+
+- (CKWeekPlanner)weekPlanner
+{
+    return [_view superview];
+}
+
+@end
+
+var CKWeekPlannerItemViewKey = @"CKWeekPlannerItemViewKey";
+
+@implementation CKWeekPlannerItem (CPCoding)
+
+/*!
+    Initializes the view item by unarchiving data from a coder.
+    @param aCoder the coder from which the data will be unarchived
+    @return the initialized collection view item
+*/
+- (id)initWithCoder:(CPCoder)aCoder
+{
+    self = [super init];
+    
+    if (self)
+        _view = [aCoder decodeObjectForKey:CKWeekPlannerItemViewKey];
+    
+    return self;
+}
+
+/*!
+    Archives the colletion view item to the provided coder.
+    @param aCoder the coder to which the view item should be archived
+*/
+- (void)encodeWithCoder:(CPCoder)aCoder
+{
+    [aCoder encodeObject:_view forKey:CKWeekPlannerItemViewKey];
+}
+
+@end

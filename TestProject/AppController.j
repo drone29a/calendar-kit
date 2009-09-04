@@ -13,6 +13,7 @@
 @import "CalendarKit/CKSchedule.j"
 
 @import "WeekPlannerController.j"
+@import "WeekPlannerEventView.j"
 
 @implementation AppController : CPObject
 {
@@ -40,6 +41,10 @@
 
     var weekPlanner = [[CKWeekPlanner alloc] initWithFrame:[floatingContentView bounds] schedule:nil];
     [weekPlanner setAutoresizingMask:CPViewWidthSizable | CPViewHeightSizable];
+
+    var eventItem = [[CKWeekPlannerItem alloc] init];
+    [eventItem setView:[[WeekPlannerEventView alloc] initWithFrame:CGRectMakeZero()]];
+    [weekPlanner setEventItemPrototype:eventItem];    
 
     var weekPlannerController = [[WeekPlannerController alloc] init];
     [weekPlanner setDelegate:weekPlannerController];

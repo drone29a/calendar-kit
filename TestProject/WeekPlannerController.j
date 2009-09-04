@@ -1,8 +1,24 @@
 @import "CalendarKit/CKEvent.j"
 
+@import "WeekPlannerEventView.j"
+
 @implementation WeekPlannerController : CPObject
 {
     CKSchedule _schedule @accessors(property=schedule);
+    
+}
+
+- (id)init
+{
+    if (self = [super init])
+    {
+        [[CPNotificationCenter defaultCenter] addObserver:self 
+                                                 selector:@selector(weekPlannerItemSelected:)
+                                                     name:CKWeekPlannerItemSelectedNotification
+                                                   object:nil];
+    }
+
+    return self;
 }
 
 - (void)weekPlanner:(CKWeekPlanner)aPlanner didDoubleClickOnDay:(int)dayIndex atTime:(float)time
@@ -30,3 +46,11 @@
         
     }
 }
+
+// TODO: Should be CKWeekPlannerItem that handles instead, then we get called as delegate?
+- (void)weekPlannerItemSelected:(CPNotification)notification
+{
+    [[notification object] setSelected:YES];
+}
+
+@end
