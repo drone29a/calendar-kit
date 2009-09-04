@@ -68,11 +68,18 @@
     [self drawHalfHourGrid];
 
     // Draw events
-    for (var i = 0; i < [[_schedule events] count]; ++i) 
+    var index = 0;
+    for (; index < [[_schedule events] count]; ++index) 
     {
-        var event = [[_schedule events] objectAtIndex: i];
-        CPLog.debug([event startDate]);
+        _eventItems.push([self newEventItemForEventObject:[[_schedule events] objectAtIndex: index]]);        
+        [self addSubview:[_eventItems[index] view]];
+        [self layoutItemView:[_eventItems[index] view]];
     }
+}
+
+- (void)layoutItemView:(CPView)itemView
+{
+    [itemView setFrameSize:CPSizeMake([self dayWidth], [self hourHeight])];
 }
 
 - (void)drawHourGrid
