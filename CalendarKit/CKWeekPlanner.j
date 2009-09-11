@@ -90,7 +90,7 @@
     var timeDiff = [eventStartDate timeIntervalSinceDate:scheduleStartDate];
     var xPos = [self dayWidth] * Math.floor((timeDiff / (60 * 60 * 24)));
 
-    //    [itemView setFrameOrigin:CPPointMake(xPos, 0)];
+    [itemView setFrameOrigin:CPPointMake(xPos, 0)];
 }
 
 - (void)drawHourGrid
