@@ -67,19 +67,30 @@
     [self drawHourGrid];   
     [self drawHalfHourGrid];
 
+    CPLog.debug("drawing events.");
     // Draw events
+    _eventItems = [];
     var index = 0;
     for (; index < [[_schedule events] count]; ++index) 
     {
-        _eventItems.push([self newEventItemForEventObject:[[_schedule events] objectAtIndex: index]]);        
-        [self addSubview:[_eventItems[index] view]];
-        [self layoutItemView:[_eventItems[index] view]];
+        var item = [self newEventItemForEventObject:[[_schedule events] objectAtIndex: index]];
+        _eventItems.push(item);  
+        CPLog.debug("index: " + index + ", eventStart: " + [[item representedObject] startDate]);
+        [self addSubview:[item view]];
+        [self layoutItemView:[item view]];
     }
 }
 
 - (void)layoutItemView:(CPView)itemView
 {
     [itemView setFrameSize:CPSizeMake([self dayWidth], [self hourHeight])];
+
+    var eventStartDate = [[itemView representedObject] startDate];
+    var scheduleStartDate = _schedule._startDate;
+    var timeDiff = [eventStartDate timeIntervalSinceDate:scheduleStartDate];
+    var xPos = [self dayWidth] * Math.floor((timeDiff / (60 * 60 * 24)));
+
+    //    [itemView setFrameOrigin:CPPointMake(xPos, 0)];
 }
 
 - (void)drawHourGrid
@@ -257,11 +268,9 @@
     [CPApp setTarget:self selector:@selector(trackSelection:) forNextEventMatchingMask:CPLeftMouseDraggedMask | CPLeftMouseUpMask untilDate:nil inMode:nil dequeue:YES];
 }
 
-- (CKEventItem)newEventItemForEventObject:(id)anObject
+- (CKWeekPlannerItem)newEventItemForEventObject:(id)anObject
 {
     var item = [CPKeyedUnarchiver unarchiveObjectWithData:_eventItemData];
-    
-    CPLog.debug(anObject._startDate);
 
     [item setRepresentedObject:anObject];
     [[item view] setFrameSize:CPSizeMake(100, 100)];
