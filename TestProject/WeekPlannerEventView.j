@@ -39,7 +39,8 @@
 - (void)mouseUp:(CPEvent)anEvent
 {
     [[CPNotificationCenter defaultCenter] postNotificationName:CKWeekPlannerItemViewSelectedNotification
-                                                        object:self];
+                                                        object:self
+                                                      userInfo:[CPDictionary dictionaryWithObject:anEvent forKey:"event"]];
 }
 
 @end
