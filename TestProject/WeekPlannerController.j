@@ -12,10 +12,7 @@
 {
     if (self = [super init])
     {
-        [[CPNotificationCenter defaultCenter] addObserver:self 
-                                                 selector:@selector(weekPlannerItemSelected:)
-                                                     name:CKWeekPlannerItemSelectedNotification
-                                                   object:nil];
+
     }
 
     return self;
