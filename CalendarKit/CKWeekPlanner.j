@@ -86,12 +86,12 @@
 {
     [itemView setFrameSize:CPSizeMake([self dayWidth], [self hourHeight])];
 
-    var eventStartDate = [[itemView representedObject] startDate];
-    var scheduleStartDate = _schedule._startDate;
-    var timeDiff = [eventStartDate timeIntervalSinceDate:scheduleStartDate];
-    var xPos = [self dayWidth] * Math.floor((timeDiff / (60 * 60 * 24)));
+    var eventStartDate = [[itemView representedObject] startDate],
+        scheduleStartDate = _schedule._startDate,
+        xPos = [self dayWidth] * Math.floor(([eventStartDate timeIntervalSinceDate:scheduleStartDate] / (60 * 60 * 24))),
+        yPos = [self hourHeight] * (eventStartDate.getHours() + (eventStartDate.getMinutes() / 60.0));
 
-    [itemView setFrameOrigin:CPPointMake(xPos, 0)];
+    [itemView setFrameOrigin:CPPointMake(xPos, yPos)];
 
     [itemView setNeedsDisplay:YES];
     [self setNeedsDisplay:YES];
