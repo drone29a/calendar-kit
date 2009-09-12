@@ -12,9 +12,14 @@
     id _delegate @accessors(property=delegate);
     
     CKWeekPlannerItem _eventItemData;
-    CKWeekPlannerItem _eventItemForDragging;
     CKWeekPlannerItem _eventItemPrototype @accessors(property=eventItemPrototype);
-    // What hours to display
+    CKWeekPlannerItem _weekPlannerItemForDragging;
+
+    CPWeekPlannerItem _hitWeekPlannerItem;
+    BOOL trackingWeekPlannerItemHit;
+    CPPoint dragLocation;
+    
+    // What hours to display grayed out (TODO)
     CPRange _hourRange @accessors(property=hourRange);
     
     CPArray _items;
@@ -42,7 +47,7 @@
     _numDays = 7;
     _numHours = 24;
 
-    _eventItems = [];
+    _items = [];
 
     [[CPNotificationCenter defaultCenter] addObserver:self 
                                              selector:@selector(weekPlannerItemSelected:)
@@ -50,11 +55,10 @@
                                                object:nil]
 }
 
-- (void)setEventItemPrototype:(CKWeekPlannerItem)anEventItem
+- (void)setEventItemPrototype:(CKWeekPlannerItem)theEventItem
 {
-    _eventItemData = [CPKeyedArchiver archivedDataWithRootObject:anEventItem];
-    _eventItemForDragging = anEventItem;
-    _eventItemPrototype = anEventItem;
+    _eventItemData = [CPKeyedArchiver archivedDataWithRootObject:theEventItem];
+    _eventItemPrototype = theEventItem;
 
     [self setNeedsDisplay:YES];
 }
@@ -77,8 +81,8 @@
 
 - (void)layoutItemViews
 {
-    for (var index = 0; index < [_eventItems count]; ++index) {
-        [self layoutItemView:[_eventItems[index] view]];
+    for (var index = 0; index < [_items count]; ++index) {
+        [self layoutItemView:[_items[index] view]];
     }
 }
 
@@ -155,17 +159,17 @@
 
 - (void)reloadItems
 {
-    for (var index = 0; index < [_eventItems count]; ++index)
+    for (var index = 0; index < [_items count]; ++index)
     {
-        var item = _eventItems[index];
+        var item = _items[index];
         [[item view] removeFromSuperview];
     }
 
-    _eventItems = [];
+    _items = [];
     for (var index = 0; index < [[_schedule events] count]; ++index) 
     {
         var item = [self newEventItemForEventObject:[[_schedule events] objectAtIndex: index]];
-        _eventItems.push(item);  
+        _items.push(item);  
         [self addSubview:[item view]];
         [self layoutItemView:[item view]];
     }
@@ -209,14 +213,60 @@
     return CPRectGetHeight([self bounds]) / _numHours;
 }
 
-- (void)mouseUp:(CPEvent)anEvent
+- (CKWeekPlannerItem)weekPlannerItemAtPoint:(CPPoint)thePoint
 {
-    var type = [anEvent type],
-        location = [self convertPoint:[anEvent locationInWindow] fromView:nil],
+    var index = 0;
+    while (index < [_items count])
+    {
+        if (CPRectContainsPoint([[_items[index] view] frame], thePoint))
+        {
+            return _items[index];
+        }
+        ++index;
+    }
+
+    return nil;
+}
+
+- (void)mouseDown:(CPEvent)theEvent
+{       
+    _hitWeekPlannerItem = [self weekPlannerItemAtPoint: [self convertPoint:[theEvent locationInWindow] fromView:nil]];
+    dragLocation = [theEvent locationInWindow];
+
+    if (_hitWeekPlannerItem != nil)
+    {
+        trackingWeekPlannerItemHit = YES;
+    }
+}
+
+- (void)mouseDragged:(CPEvent)theEvent
+{
+    if (trackingWeekPlannerItemHit) 
+    {
+        var currentFrameOrigin = [[_hitWeekPlannerItem view] frame].origin;
+        //        debugger;
+        //        [_hitWeekPlannerItem setFrameOrigin:CPMakePoint(currentFrameOrigin.x + [theEvent deltaX], currentFrameOrigin.y + [theEvent deltaY])];
+
+        //TODO: why are the deltas not set?
+
+        //TODO: here we should be checking if we cross day or 15-minute marks (ala iCal) and then let the controller know what's up so that it may modify the model
+        // and then the modified model will be re-layed out to the correct location.
+        var location = [theEvent locationInWindow];
+
+        [[_hitWeekPlannerItem view] setFrameOrigin:CPMakePoint(currentFrameOrigin.x + location.x - dragLocation.x, 
+                                                               currentFrameOrigin.y + location.y - dragLocation.y)];
+        dragLocation = location;
+    }
+}
+
+- (void)mouseUp:(CPEvent)theEvent
+{
+    var type = [theEvent type],
+        location = [self convertPoint:[theEvent locationInWindow] fromView:nil],
         clickedDay = [self dayAtPoint:location],
         clickedTime = [self timeAtPoint:location];
 
-    if (type == CPLeftMouseUp && [anEvent clickCount] == 2)
+    if (type == CPLeftMouseUp && [theEvent clickCount] == 2)
     {
         if ([_delegate respondsToSelector:@selector(weekPlanner:didDoubleClickOnDay:atTime:)]) 
         {
@@ -230,21 +280,23 @@
             [_delegate weekPlanner:self didClickOnDay:clickedDay atTime:clickedTime];
         }
     }
-        
+
+    [self clearSelection];
+    trackingWeekPlannerItemHit = NO;
+    dragLocation = nil;
 }
 
-- (void)mouseDown:(CPEvent)anEvent
-{       
-
+- (void)clearSelection
+{
+    for (var index = 0; index < [_items count]; ++index) 
+    {
+        [_items[index] setSelected:NO];
+    }
 }
 
 - (void)weekPlannerItemSelected:(CPNotification)aNotification
 {
-    for (var index = 0; index < [_eventItems count]; ++index) 
-    {
-        [_eventItems[index] setSelected:NO];
-    }
-
+    [self clearSelection];
     [[aNotification object] setSelected:YES];
 }
 
@@ -260,10 +312,10 @@
     }
 }
 
-- (void)trackSelection:(CPEvent)anEvent
+- (void)trackSelection:(CPEvent)theEvent
 {
-    var type = [anEvent type],
-        point = [self convertPoint:[anEvent locationInWindow] fromView:nil],
+    var type = [theEvent type],
+        point = [self convertPoint:[theEvent locationInWindow] fromView:nil],
         currentRow = MAX(0, MIN(_numberOfRows-1, [self _rowAtY:point.y]));
     
     if (type == CPLeftMouseUp)
@@ -271,7 +323,7 @@
         _clickedDay = [self dayAtPoint:point];
         _clickedTime = [self timeAtPoint:point];
         
-        if ([anEvent clickCount] === 2)
+        if ([theEvent clickCount] === 2)
         {
             CPLog.warn("edit?!");
             
