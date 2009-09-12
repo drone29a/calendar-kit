@@ -281,7 +281,6 @@
         }
     }
 
-    [self clearSelection];
     trackingWeekPlannerItemHit = NO;
     dragLocation = nil;
 }

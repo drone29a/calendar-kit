@@ -57,11 +57,13 @@ var SELECTED_COLOR = [CPColor colorWithCalibratedRed:0.3 green:0.9 blue:0.2 alph
     [self setAlphaValue: 1.0];
 }
 
-- (void)mouseUp:(CPEvent)anEvent
+- (void)mouseDown:(CPEvent)anEvent
 {
     [[CPNotificationCenter defaultCenter] postNotificationName:CKWeekPlannerItemViewSelectedNotification
                                                         object:self
                                                       userInfo:[CPDictionary dictionaryWithObject:anEvent forKey:"event"]];
+
+    [[self nextResponder] mouseDown:anEvent];
 }
 
 @end
