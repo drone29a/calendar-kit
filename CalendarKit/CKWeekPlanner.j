@@ -43,6 +43,11 @@
     _numHours = 24;
 
     _eventItems = [];
+
+    [[CPNotificationCenter defaultCenter] addObserver:self 
+                                             selector:@selector(weekPlannerItemSelected:)
+                                                 name:CKWeekPlannerItemSelectedNotification
+                                               object:nil]
 }
 
 - (void)setEventItemPrototype:(CKWeekPlannerItem)anEventItem
@@ -234,6 +239,16 @@
 
 }
 
+- (void)weekPlannerItemSelected:(CPNotification)aNotification
+{
+    for (var index = 0; index < [_eventItems count]; ++index) 
+    {
+        [_eventItems[index] setSelected:NO];
+    }
+
+    [[aNotification object] setSelected:YES];
+}
+
 - (void)observeValueForKeyPath:(CPString)keyPath
                       ofObject:(id)object
                         change:(CPDictionary)change
@@ -338,7 +353,8 @@ CKWeekPlannerItemViewSelectedNotification = "CKWeekPlannerItemViewSelectedNotifi
 - (void)viewSelected:(CPNotification)notification
 {
     [[CPNotificationCenter defaultCenter] postNotificationName:CKWeekPlannerItemSelectedNotification
-                                                        object:self];
+                                                        object:self
+                                                      userInfo:[notification userInfo]];
 }
 
 /*!
