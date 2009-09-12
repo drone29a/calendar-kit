@@ -149,6 +149,24 @@
     [path stroke];
 }
 
+- (void)reloadItems
+{
+    for (var index = 0; index < [_eventItems count]; ++index)
+    {
+        var item = _eventItems[index];
+        [[item view] removeFromSuperview];
+    }
+
+    _eventItems = [];
+    for (var index = 0; index < [[_schedule events] count]; ++index) 
+    {
+        var item = [self newEventItemForEventObject:[[_schedule events] objectAtIndex: index]];
+        _eventItems.push(item);  
+        [self addSubview:[item view]];
+        [self layoutItemView:[item view]];
+    }
+}
+
 /*
     Returns the index of the row at the given point, or CPNotFound (-1) if it is out of range.
     @param aPoint the point
