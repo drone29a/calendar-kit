@@ -72,17 +72,13 @@
     [self drawHourGrid];   
     [self drawHalfHourGrid];
 
-    CPLog.debug("drawing events.");
-    // Draw events
-    _eventItems = [];
-    var index = 0;
-    for (; index < [[_schedule events] count]; ++index) 
-    {
-        var item = [self newEventItemForEventObject:[[_schedule events] objectAtIndex: index]];
-        _eventItems.push(item);  
-        CPLog.debug("index: " + index + ", eventStart: " + [[item representedObject] startDate]);
-        [self addSubview:[item view]];
-        [self layoutItemView:[item view]];
+    [self layoutItemViews];
+}
+
+- (void)layoutItemViews
+{
+    for (var index = 0; index < [_eventItems count]; ++index) {
+        [self layoutItemView:[_eventItems[index] view]];
     }
 }
 
@@ -96,6 +92,9 @@
     var xPos = [self dayWidth] * Math.floor((timeDiff / (60 * 60 * 24)));
 
     [itemView setFrameOrigin:CPPointMake(xPos, 0)];
+
+    [itemView setNeedsDisplay:YES];
+    [self setNeedsDisplay:YES];
 }
 
 - (void)drawHourGrid
@@ -256,6 +255,7 @@
 {
     if (keyPath == "events")
     {
+        [self reloadItems];
         [self setNeedsDisplay:YES];
     }
 }
