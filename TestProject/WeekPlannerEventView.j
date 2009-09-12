@@ -1,9 +1,29 @@
+var DEFAULT_COLOR = [CPColor colorWithCalibratedRed:0.3 green:0.9 blue:0.2 alpha:0.65];
+var SELECTED_COLOR = [CPColor colorWithCalibratedRed:0.3 green:0.9 blue:0.2 alpha:1.0];
+
 @implementation WeekPlannerEventView : CPView
 {
     CPTextField title @accessors;
     id _representedObject;
     
     BOOL selected;
+}
+
+- (id)init
+{
+    self = [super init];
+
+    if (self)
+    {
+        [self _init];
+    }
+
+    return self;
+}
+
+- (void)_init
+{
+
 }
 
 - (id)representedObject
@@ -28,12 +48,13 @@
     [title setFrameOrigin:CGPointMake(10, 0)];
     [title setLineBreakMode:CPLineBreakByWordWrapping];
 
-    [self setBackgroundColor:[CPColor blueColor]];
+    [self setBackgroundColor:DEFAULT_COLOR];
 }
 
 - (void)setSelected:(BOOL)isSelected
 {
-    [self setBackgroundColor:isSelected ? [CPColor greenColor] : [CPColor blueColor]];
+    [self setBackgroundColor:isSelected ? SELECTED_COLOR : DEFAULT_COLOR];
+    [self setAlphaValue: 1.0];
 }
 
 - (void)mouseUp:(CPEvent)anEvent
