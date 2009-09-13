@@ -50,4 +50,14 @@
     [[notification object] setSelected:YES];
 }
 
+- (void)weekPlannerItem:(CKWeekPlannerItem)anItem movedToDay:(int)aDay
+{
+    // Change date accordingly!
+    var event = [anItem representedObject],
+        interval = 24 * 60 * 60 * (aDay - [event startDate].getDay());
+    
+    [event setStartDate: [[CPDate alloc] initWithTimeInterval:interval sinceDate:[event startDate]]];
+    [event setEndDate: [[CPDate alloc] initWithTimeInterval:interval sinceDate:[event endDate]]];
+}
+
 @end

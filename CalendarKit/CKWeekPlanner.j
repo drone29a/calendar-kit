@@ -244,17 +244,23 @@
     if (trackingWeekPlannerItemHit) 
     {
         var currentFrameOrigin = [[_hitWeekPlannerItem view] frame].origin;
-        //        debugger;
-        //        [_hitWeekPlannerItem setFrameOrigin:CPMakePoint(currentFrameOrigin.x + [theEvent deltaX], currentFrameOrigin.y + [theEvent deltaY])];
-
-        //TODO: why are the deltas not set?
 
         //TODO: here we should be checking if we cross day or 15-minute marks (ala iCal) and then let the controller know what's up so that it may modify the model
         // and then the modified model will be re-layed out to the correct location.
         var location = [theEvent locationInWindow];
 
-        [[_hitWeekPlannerItem view] setFrameOrigin:CPMakePoint(currentFrameOrigin.x + location.x - dragLocation.x, 
-                                                               currentFrameOrigin.y + location.y - dragLocation.y)];
+        // TODO: here's a spot where not starting the week planner on Sunday would cause a problem.
+        //       We need a function to map the week planner day index to the actual JS day index (0-6, starting with Sunday).
+        //       This also brings up that we're starting to assume the week planner will only be for a normal 7 day week.
+        //       More advanced support will need to be added by a subclass, seems fair!  =)
+        // Check if we've crossed a day boundary
+        if ([self dayAtPoint:location] != [[_hitWeekPlannerItem representedObject] startDate].getDay())
+        {
+            [self weekPlannerItem:_hitWeekPlannerItem movedToDay:[self dayAtPoint:location]];
+        }
+
+//         [[_hitWeekPlannerItem view] setFrameOrigin:CPMakePoint(currentFrameOrigin.x + location.x - dragLocation.x, 
+//                                                                currentFrameOrigin.y + location.y - dragLocation.y)];
         dragLocation = location;
     }
 }
@@ -283,6 +289,17 @@
 
     trackingWeekPlannerItemHit = NO;
     dragLocation = nil;
+}
+
+- (void)weekPlannerItem:(CKWeekPlannerItem)anItem movedToDay:(int)aDay
+{
+    if ([_delegate respondsToSelector:@selector(weekPlannerItem:movedToDay:)]) 
+    {
+        [_delegate weekPlannerItem:anItem movedToDay:aDay];
+    }
+
+    [self reloadItems];
+    [self setNeedsDisplay:YES];
 }
 
 - (void)clearSelection
