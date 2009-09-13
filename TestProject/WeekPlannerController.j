@@ -52,12 +52,31 @@
 
 - (void)weekPlannerItem:(CKWeekPlannerItem)anItem movedToDay:(int)aDay
 {
-    // Change date accordingly!
     var event = [anItem representedObject],
         interval = 24 * 60 * 60 * (aDay - [event startDate].getDay());
     
     [event setStartDate: [[CPDate alloc] initWithTimeInterval:interval sinceDate:[event startDate]]];
     [event setEndDate: [[CPDate alloc] initWithTimeInterval:interval sinceDate:[event endDate]]];
+
+    [anItem setRepresentedObject:event];
+}
+
+- (void)weekPlannerItem:(CKWeekPlannerItem)anItem movedToTime:(float)aTime
+{
+
+    CPLog.debug("aTime: " + aTime);
+
+    var event = [anItem representedObject],
+        eventStart = [event startDate],
+        interval = (aTime * 60 * 60) - ((eventStart.getHours() * 60 * 60) + 
+                                        (eventStart.getMinutes() * 60) +
+                                        eventStart.getSeconds() +
+                                        (eventStart.getMilliseconds() / 1000));
+    
+    [event setStartDate: [[CPDate alloc] initWithTimeInterval:interval sinceDate:[event startDate]]];
+    [event setEndDate: [[CPDate alloc] initWithTimeInterval:interval sinceDate:[event endDate]]];
+
+    [anItem setRepresentedObject:event];
 }
 
 @end

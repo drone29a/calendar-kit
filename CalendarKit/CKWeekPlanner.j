@@ -48,6 +48,7 @@
     _numHours = 24;
 
     _items = [];
+    _selectedItems = [];
 
     [[CPNotificationCenter defaultCenter] addObserver:self 
                                              selector:@selector(weekPlannerItemSelected:)
@@ -200,9 +201,9 @@
 
 - (float)timeAtPoint:(CGPoint)aPoint
 {
-    var time = (aPoint.y / [self hourHeight]) + _hourRange.location;
+    var time = (aPoint.y / [self hourHeight]);
     
-    if (time < 0 || time > 24)
+    if (time < 0.0 || time > 24.0)
         return CPNotFound;
 
     return time;
@@ -236,6 +237,9 @@
     if (_hitWeekPlannerItem != nil)
     {
         trackingWeekPlannerItemHit = YES;
+    } else
+    {
+        [self clearSelection];
     }
 }
 
@@ -259,9 +263,12 @@
             [self weekPlannerItem:_hitWeekPlannerItem movedToDay:[self dayAtPoint:location]];
         }
 
-//         [[_hitWeekPlannerItem view] setFrameOrigin:CPMakePoint(currentFrameOrigin.x + location.x - dragLocation.x, 
-//                                                                currentFrameOrigin.y + location.y - dragLocation.y)];
-        dragLocation = location;
+        if (quarterMinutes(minutesRemainder([self timeAtPoint:dragLocation])) != quarterMinutes(minutesRemainder([self timeAtPoint:location])))
+        {
+            var targetPoint = CPPointMake(currentFrameOrigin.x, currentFrameOrigin.y + location.y - dragLocation.y);
+            [self weekPlannerItem:_hitWeekPlannerItem movedToTime:[self timeAtPoint:targetPoint]];
+            dragLocation = location;
+        }
     }
 }
 
@@ -298,7 +305,25 @@
         [_delegate weekPlannerItem:anItem movedToDay:aDay];
     }
 
-    [self reloadItems];
+    [self setNeedsDisplay:YES];
+}
+
+- (void)weekPlannerItem:(CKWeekPlannerItem)anItem movedToTime:(float)aTime
+{
+    // Shift time to a 15-minute increment
+    var minutesRemaining = (aTime * 60.0) % 60.0,
+        minutesNormalized = quarterMinutes(minutesRemaining);
+
+    CPLog.debug("minutesRemaining: " + minutesRemaining);
+    CPLog.debug("minutesNormalized: " + minutesNormalized);
+
+    aTime += ((minutesNormalized - minutesRemaining) / 60.0);
+    
+    if ([_delegate respondsToSelector:@selector(weekPlannerItem:movedToTime:)]) 
+    {
+        [_delegate weekPlannerItem:anItem movedToTime:aTime];
+    }
+
     [self setNeedsDisplay:YES];
 }
 
@@ -308,12 +333,15 @@
     {
         [_items[index] setSelected:NO];
     }
+    
+    _selectedItems = [];
 }
 
 - (void)weekPlannerItemSelected:(CPNotification)aNotification
 {
     [self clearSelection];
     [[aNotification object] setSelected:YES];
+    _selectedItems.push([aNotification object]);
 }
 
 - (void)observeValueForKeyPath:(CPString)keyPath
@@ -404,13 +432,14 @@ CKWeekPlannerItemViewSelectedNotification = "CKWeekPlannerItemViewSelectedNotifi
 */
 - (void)setRepresentedObject:(id)anObject
 {
+    // FIXME: This should be set up by bindings
+    [_view setRepresentedObject:anObject];
+    [_view setSelected:_isSelected];
+    
     if (_representedObject == anObject)
         return;
     
     _representedObject = anObject;
-    
-    // FIXME: This should be set up by bindings
-    [_view setRepresentedObject:anObject];
 
     [[CPNotificationCenter defaultCenter] addObserver:self 
                                              selector:@selector(viewSelected:)
@@ -511,3 +540,20 @@ var CKWeekPlannerItemViewKey = @"CKWeekPlannerItemViewKey";
 }
 
 @end
+
+var quarterMinutes = function(mins) {
+    if (mins > 52.5) 
+        return 60.0;
+    else if (mins <= 7.5)
+        return 0.0;
+    else if (mins <= 22.5) 
+        return 15.0;
+    else if (mins <= 37.5) 
+        return 30.0;
+    else 
+        return 45.0;
+}
+
+var minutesRemainder = function(hours) {
+    return (hours * 60.0) % 60.0;
+}
