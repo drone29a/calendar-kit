@@ -63,9 +63,6 @@
 
 - (void)weekPlannerItem:(CKWeekPlannerItem)anItem movedToTime:(float)aTime
 {
-
-    CPLog.debug("aTime: " + aTime);
-
     var event = [anItem representedObject],
         eventStart = [event startDate],
         interval = (aTime * 60 * 60) - ((eventStart.getHours() * 60 * 60) + 

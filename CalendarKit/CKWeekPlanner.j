@@ -56,6 +56,11 @@
                                                object:nil]
 }
 
+- (void)viewDidMoveToWindow
+{
+    [[self window] setAcceptsMouseMovedEvents:YES];
+}
+
 - (void)setEventItemPrototype:(CKWeekPlannerItem)theEventItem
 {
     _eventItemData = [CPKeyedArchiver archivedDataWithRootObject:theEventItem];
@@ -298,6 +303,11 @@
     dragLocation = nil;
 }
 
+- (void)mouseMoved:(CPEvent)theEvent
+{
+    self._DOMElement.style.cursor = "default";
+}
+
 - (void)weekPlannerItem:(CKWeekPlannerItem)anItem movedToDay:(int)aDay
 {
     if ([_delegate respondsToSelector:@selector(weekPlannerItem:movedToDay:)]) 
@@ -313,9 +323,6 @@
     // Shift time to a 15-minute increment
     var minutesRemaining = (aTime * 60.0) % 60.0,
         minutesNormalized = quarterMinutes(minutesRemaining);
-
-    CPLog.debug("minutesRemaining: " + minutesRemaining);
-    CPLog.debug("minutesNormalized: " + minutesNormalized);
 
     aTime += ((minutesNormalized - minutesRemaining) / 60.0);
     
@@ -368,9 +375,7 @@
         _clickedTime = [self timeAtPoint:point];
         
         if ([theEvent clickCount] === 2)
-        {
-            CPLog.warn("edit?!");
-            
+        {            
             [self sendAction:_doubleAction to:_target];
         }
         else

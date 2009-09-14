@@ -26,6 +26,16 @@ var SELECTED_COLOR = [CPColor colorWithCalibratedRed:0.3 green:0.9 blue:0.2 alph
 
 }
 
+- (void)viewDidMoveToWindow
+{
+    [[self window] setAcceptsMouseMovedEvents:YES];
+}
+
+- (BOOL)acceptsMouseMovedEvents
+{
+    return YES;
+}
+
 - (id)representedObject
 {
     return _representedObject;
@@ -64,6 +74,19 @@ var SELECTED_COLOR = [CPColor colorWithCalibratedRed:0.3 green:0.9 blue:0.2 alph
                                                       userInfo:[CPDictionary dictionaryWithObject:anEvent forKey:"event"]];
 
     [[self nextResponder] mouseDown:anEvent];
+}
+
+- (void)mouseMoved:(CPEvent)anEvent
+{
+    var location = [self convertPoint:[anEvent locationInWindow] fromView:nil];
+    
+    if (location.y < 5 || location.y > [self frame].size.height - 5) 
+    {
+        [self superview]._DOMElement.style.cursor = "ns-resize";
+    } else
+    {
+        [self superview]._DOMElement.style.cursor = "default";
+    }
 }
 
 @end
