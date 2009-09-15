@@ -6,6 +6,10 @@
 
 @import <AppKit/CPView.j>
 
+var DRAG_ACTION_MOVE = 0,
+    DRAG_ACTION_RESIZE_AT_TOP = 1,
+    DRAG_ACTION_RESIZE_AT_BOTTOM = 2;
+
 @implementation CKWeekPlanner : CPView
 {
     CKSchedule _schedule @accessors(property=schedule);
@@ -16,6 +20,7 @@
     CKWeekPlannerItem _weekPlannerItemForDragging;
 
     CPWeekPlannerItem _hitWeekPlannerItem;
+    int dragAction;
     BOOL trackingWeekPlannerItemHit;
     CPPoint dragLocation;
     
@@ -241,8 +246,24 @@
 
     if (_hitWeekPlannerItem != nil)
     {
+        var convertedLocation = [[_hitWeekPlannerItem view] convertPoint:dragLocation fromView:nil];
+        
         trackingWeekPlannerItemHit = YES;
-    } else
+        
+        if (convertedLocation.y < 5)
+        {
+            dragAction = DRAG_ACTION_RESIZE_AT_TOP;
+        } 
+        else if (convertedLocation.y > [[_hitWeekPlannerItem view] frame].size.height - 5)
+        {
+            dragAction = DRAG_ACTION_RESIZE_AT_BOTTOM;;
+        } 
+        else
+        {
+            dragAction = DRAG_ACTION_MOVE;
+        }
+    } 
+    else
     {
         [self clearSelection];
     }
@@ -253,26 +274,37 @@
     if (trackingWeekPlannerItemHit) 
     {
         var currentFrameOrigin = [[_hitWeekPlannerItem view] frame].origin;
-
-        //TODO: here we should be checking if we cross day or 15-minute marks (ala iCal) and then let the controller know what's up so that it may modify the model
-        // and then the modified model will be re-layed out to the correct location.
         var location = [theEvent locationInWindow];
 
-        // TODO: here's a spot where not starting the week planner on Sunday would cause a problem.
-        //       We need a function to map the week planner day index to the actual JS day index (0-6, starting with Sunday).
-        //       This also brings up that we're starting to assume the week planner will only be for a normal 7 day week.
-        //       More advanced support will need to be added by a subclass, seems fair!  =)
-        // Check if we've crossed a day boundary
-        if ([self dayAtPoint:location] != [[_hitWeekPlannerItem representedObject] startDate].getDay())
+        // Check if out of bounds
+        if (!CPRectContainsPoint([self bounds], location))
         {
-            [self weekPlannerItem:_hitWeekPlannerItem movedToDay:[self dayAtPoint:location]];
+            return;
         }
-
-        if (quarterMinutes(minutesRemainder([self timeAtPoint:dragLocation])) != quarterMinutes(minutesRemainder([self timeAtPoint:location])))
+        
+        if (dragAction == DRAG_ACTION_MOVE) 
         {
-            var targetPoint = CPPointMake(currentFrameOrigin.x, currentFrameOrigin.y + location.y - dragLocation.y);
-            [self weekPlannerItem:_hitWeekPlannerItem movedToTime:[self timeAtPoint:targetPoint]];
-            dragLocation = location;
+            // TODO: here's a spot where not starting the week planner on Sunday would cause a problem.
+            //       We need a function to map the week planner day index to the actual JS day index (0-6, starting with Sunday).
+            //       This also brings up that we're starting to assume the week planner will only be for a normal 7 day week.
+            //       More advanced support will need to be added by a subclass, seems fair!  =)
+            
+            // Check if we've crossed a day boundary
+            if ([self dayAtPoint:location] != [[_hitWeekPlannerItem representedObject] startDate].getDay())
+            {
+                [self weekPlannerItem:_hitWeekPlannerItem movedToDay:[self dayAtPoint:location]];
+            }
+
+            if (quarterMinutes(minutesRemainder([self timeAtPoint:dragLocation])) != quarterMinutes(minutesRemainder([self timeAtPoint:location])))
+            {
+                var targetPoint = CPPointMake(currentFrameOrigin.x, currentFrameOrigin.y + location.y - dragLocation.y);
+                [self weekPlannerItem:_hitWeekPlannerItem movedToTime:[self timeAtPoint:targetPoint]];
+                dragLocation = location;
+            }
+        }
+        else if (dragAction == DRAG_ACTION_RESIZE_AT_TOP)
+        {
+            
         }
     }
 }
